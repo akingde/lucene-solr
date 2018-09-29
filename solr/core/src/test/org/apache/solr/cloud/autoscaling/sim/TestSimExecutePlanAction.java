@@ -92,7 +92,7 @@ public class TestSimExecutePlanAction extends SimSolrCloudTestCase {
     log.info("Collection ready after " + CloudTestUtils.waitForState(cluster, collectionName, 120, TimeUnit.SECONDS,
         CloudTestUtils.clusterShape(1, 2, false, true)) + "ms");
 
-    String sourceNodeName = cluster.getSimClusterStateProvider().simGetRandomNode(random());
+    String sourceNodeName = cluster.getSimClusterStateProvider().simGetRandomNode();
     ClusterState clusterState = cluster.getClusterStateProvider().getClusterState();
     DocCollection docCollection = clusterState.getCollection(collectionName);
     List<Replica> replicas = docCollection.getReplicas(sourceNodeName);
@@ -137,7 +137,7 @@ public class TestSimExecutePlanAction extends SimSolrCloudTestCase {
       List<CollectionAdminRequest.AsyncCollectionAdminRequest> operations = Lists.asList(moveReplica, new CollectionAdminRequest.AsyncCollectionAdminRequest[]{mockRequest});
       NodeLostTrigger.NodeLostEvent nodeLostEvent = new NodeLostTrigger.NodeLostEvent(TriggerEventType.NODELOST,
           "mock_trigger_name", Collections.singletonList(TimeSource.CURRENT_TIME.getTimeNs()),
-          Collections.singletonList(sourceNodeName));
+          Collections.singletonList(sourceNodeName), CollectionParams.CollectionAction.MOVEREPLICA.toLower());
       ActionContext actionContext = new ActionContext(cluster, null,
           new HashMap<>(Collections.singletonMap("operations", operations)));
       action.process(nodeLostEvent, actionContext);
@@ -181,7 +181,7 @@ public class TestSimExecutePlanAction extends SimSolrCloudTestCase {
     CloudTestUtils.waitForState(cluster, "Timed out waiting for replicas of new collection to be active",
         collectionName, CloudTestUtils.clusterShape(1, 2, false, true));
 
-    String sourceNodeName = cluster.getSimClusterStateProvider().simGetRandomNode(random());
+    String sourceNodeName = cluster.getSimClusterStateProvider().simGetRandomNode();
     ClusterState clusterState = cluster.getClusterStateProvider().getClusterState();
     DocCollection docCollection = clusterState.getCollection(collectionName);
     List<Replica> replicas = docCollection.getReplicas(sourceNodeName);

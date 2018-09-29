@@ -14,49 +14,61 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.lucene.search;
 
-
 import java.io.IOException;
-import java.util.Collection;
 
-/** Used by {@link BulkScorer}s that need to pass a {@link
- *  Scorer} to {@link LeafCollector#setScorer}. */
-final class FakeScorer extends Scorer {
-  float score;
-  int doc = -1;
+/**
+ * A MatchesIterator that delegates all calls to another MatchesIterator
+ */
+public abstract class FilterMatchesIterator implements MatchesIterator {
 
-  public FakeScorer() {
-    super(null);
+  /**
+   * The delegate
+   */
+  protected final MatchesIterator in;
+
+  /**
+   * Create a new FilterMatchesIterator
+   * @param in the delegate
+   */
+  protected FilterMatchesIterator(MatchesIterator in) {
+    this.in = in;
   }
 
   @Override
-  public int docID() {
-    return doc;
+  public boolean next() throws IOException {
+    return in.next();
   }
 
   @Override
-  public float score() {
-    return score;
+  public int startPosition() {
+    return in.startPosition();
   }
 
   @Override
-  public float getMaxScore(int upTo) throws IOException {
-    return Float.POSITIVE_INFINITY;
+  public int endPosition() {
+    return in.endPosition();
   }
 
   @Override
-  public DocIdSetIterator iterator() {
-    throw new UnsupportedOperationException();
+  public int startOffset() throws IOException {
+    return in.startOffset();
   }
 
   @Override
-  public Weight getWeight() {
-    throw new UnsupportedOperationException();
+  public int endOffset() throws IOException {
+    return in.endOffset();
   }
 
   @Override
-  public Collection<ChildScorer> getChildren() {
-    throw new UnsupportedOperationException();
+  public MatchesIterator getSubMatches() throws IOException {
+    return in.getSubMatches();
+  }
+
+  @Override
+  public Query getQuery() {
+    return in.getQuery();
   }
 }

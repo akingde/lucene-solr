@@ -14,40 +14,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.lucene.expressions;
 
+package org.apache.lucene.search;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.Scorer;
+/**
+ * Filter a {@link Scorable}, intercepting methods and optionally changing
+ * their return values
+ *
+ * The default implementation simply passes all calls to its delegate, with
+ * the exception of {@link #setMinCompetitiveScore(float)} which defaults
+ * to a no-op.
+ */
+public class FilterScorable extends Scorable {
 
-class FakeScorer extends Scorer {
+  protected final Scorable in;
 
-  float score;
-  int doc = -1;
-
-  FakeScorer() {
-    super(null);
-  }
-
-  @Override
-  public int docID() {
-    return doc;
-  }
-
-  @Override
-  public DocIdSetIterator iterator() {
-    throw new UnsupportedOperationException();
+  /**
+   * Filter a scorer
+   * @param in  the scorer to filter
+   */
+  public FilterScorable(Scorable in) {
+    this.in = in;
   }
 
   @Override
   public float score() throws IOException {
-    return score;
+    return in.score();
   }
 
   @Override
-  public float getMaxScore(int upTo) throws IOException {
-    return Float.POSITIVE_INFINITY;
+  public int docID() {
+    return in.docID();
+  }
+
+  @Override
+  public Collection<ChildScorable> getChildren() throws IOException {
+    return Collections.singletonList(new ChildScorable(in, "FILTER"));
   }
 }

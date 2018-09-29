@@ -297,7 +297,7 @@ public class MetricsHistoryHandler extends RequestHandlerBase implements Permiss
   }
 
   public void removeHistory(String registry) throws IOException {
-    registry = SolrMetricManager.overridableRegistryName(registry);
+    registry = SolrMetricManager.enforcePrefix(registry);
     knownDbs.remove(registry);
     factory.remove(registry);
   }
@@ -528,16 +528,16 @@ public class MetricsHistoryHandler extends RequestHandlerBase implements Permiss
         Map<String, Number> perReg = totals
             .computeIfAbsent(Group.collection, g -> new HashMap<>())
             .computeIfAbsent(registry, r -> new HashMap<>());
-        Collection<Slice> slices = coll.getActiveSlices();
-        perReg.put(NUM_SHARDS_KEY, slices.size());
+        Slice[] slices = coll.getActiveSlicesArr();
+        perReg.put(NUM_SHARDS_KEY, slices.length);
         DoubleAdder numActiveReplicas = new DoubleAdder();
-        slices.forEach(s -> {
+        for (Slice s : slices) {
           s.forEach(r -> {
             if (r.isActive(state.getLiveNodes())) {
               numActiveReplicas.add(1.0);
             }
           });
-        });
+        }
         perReg.put(NUM_REPLICAS_KEY, numActiveReplicas);
       });
     } catch (IOException e) {
@@ -586,7 +586,7 @@ public class MetricsHistoryHandler extends RequestHandlerBase implements Permiss
   }
 
   private RrdDef createDef(String registry, Group group) {
-    registry = SolrMetricManager.overridableRegistryName(registry);
+    registry = SolrMetricManager.enforcePrefix(registry);
 
     // base sampling period is collectPeriod - samples more frequent than
     // that will be dropped, samples less frequent will be interpolated
